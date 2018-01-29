@@ -22,3 +22,13 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+\.DS_Store
+
+master/node_modules/
+
+\.vagrant/machines/master/virtualbox/
+
+\.vagrant/machines/node01/virtualbox/
+
+\.vagrant/machines/node02/virtualbox/
