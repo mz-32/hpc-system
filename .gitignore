@@ -32,3 +32,5 @@ master/node_modules/
 \.vagrant/machines/node01/virtualbox/
 
 \.vagrant/machines/node02/virtualbox/
+
+master/test\.db

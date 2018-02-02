@@ -13,11 +13,15 @@ Vagrant.configure("2") do |config|
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://vagrantcloud.com/search.
   config.vm.box = "centos/7"
+  config.ssh.insert_key = false
+
 
   # 1台目管理マシン（マシン名：master）
   config.vm.define "master" do |atomic|
     atomic.vm.hostname = "master.atomichost"
-    atomic.vm.synced_folder ".", "/home/vagrant/share", type:"virtualbox"
+    atomic.vm.synced_folder ".", "/share", type:"virtualbox"
+    atomic.vm.synced_folder "/Users/mizunomi/src/hcp-system/.vagrant/machines/node02/virtualbox/", "/ssh/node02", type:"virtualbox"
+    atomic.vm.synced_folder "/Users/mizunomi/src/hcp-system/.vagrant/machines/node01/virtualbox/", "/ssh/node01", type:"virtualbox"
     atomic.vm.provision "shell", inline: <<-SHELL
       sudo yum install -y epel-release
       sudo yum -y update
@@ -33,14 +37,15 @@ Vagrant.configure("2") do |config|
   # 2台目 コンテナホスト（マシン名：node01）
   config.vm.define "node01" do |atomic|
     atomic.vm.hostname = "node01.atomichost"
-    atomic.vm.synced_folder ".", "/home/vagrant/share", type:"virtualbox"
+    atomic.vm.synced_folder ".", "/share", type:"virtualbox"
     atomic.vm.network "private_network", ip: "192.168.33.101", virtualbox__intnet: "intra"
     atomic.vm.network :forwarded_port, id: "ssh", guest: 22, host: 2223
+    atomic.vm.network :forwarded_port, id: "web", guest: 8080, host: 8082
   end
   # 3台目 コンテナホスト（マシン名：node02）
   config.vm.define "node02" do |atomic|
     atomic.vm.hostname = "node02.atomichost"
-    atomic.vm.synced_folder ".", "/home/vagrant/share", type:"virtualbox"
+    atomic.vm.synced_folder ".", "/share", type:"virtualbox"
 
     atomic.vm.network "private_network", ip: "192.168.33.102", virtualbox__intnet: "intra"
     atomic.vm.network :forwarded_port, id: "ssh", guest: 22, host: 2224

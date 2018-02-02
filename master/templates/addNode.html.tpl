@@ -91,37 +91,21 @@
                     </div>
                     <!-- /.col-lg-12 -->
                 </div>
+                <form role="form" method="post">
+                    <div class="form-group">
+                        <label>IP</label>
+                        <input name="IP" class="form-control" value="{{if .Ip}}{{.Ip}}{{end}}">
+                    </div>
+                    <div class="form-group">
+                        <label>HOSTNAME</label>
+                        <input name="HOSTNAME" class="form-control" value="{{if .Hostname}}{{.Hostname}}{{end}}">
+                    </div>
+                    <button type="submit" class="btn btn-default">Submit Button</button>
+                  </form>
 
-                id : 0<br>
-                host<br>
-
-
-                <a href="/info?id=1">info</a><br>
-                <br>
-                {{range .}}
-                id : {{.Node.Id}}<br>
-                Ip : {{.Node.Ip}}<br>
-                hostname : {{.Node.Hostname}}<br>
-                online : {{.Online}}<br>
-                <a href="/info?id={{.Node.Id}}">info</a><br>
-                {{end}}
-
-    <br>
-    <div class="row">
-      <div class="col-lg-6">
-
-<canvas id="CPU"></canvas>
-
-      </div>
-      <div class="col-lg-6">
-        <canvas id="Mem"></canvas>
-          </div>
-    </div>
 
             </div>
             <!-- /#page-wrapper -->
-
-
         </div>
         <!-- /#wrapper -->
 
@@ -141,7 +125,6 @@
 
         <!-- Custom Theme JavaScript -->
         <script src="/assets/startmin/js/startmin.js"></script>
-
 
     </body>
 </html>
