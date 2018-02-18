@@ -34,3 +34,9 @@ master/node_modules/
 \.vagrant/machines/node02/virtualbox/
 
 master/test\.db
+
+master/main
+
+node/node
+
+test\.db

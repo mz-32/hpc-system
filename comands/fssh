@@ -1,0 +1,28 @@
+#!/bin/bash
+CMDNAME=`basename $0`
+VALUE_CPU=0
+VALUE_MEM=0
+while getopts o:c:m: OPT
+do
+  case $OPT in
+    "o" ) FLG_OPTION="TRUE" ; VALUE_OPTION="$OPTARG" ;;
+    "c" ) FLG_CPU="TRUE" ; VALUE_CPU="$OPTARG" ;;
+    "m" ) FLG_MEM="TRUE" ; VALUE_MEM="$OPTARG" ;;
+    * ) echo "Usage: $CMDNAME [-c VALUE] [-m VALUE]" 1>&2
+         exit 1 ;;
+  esac
+done
+
+
+exec 3<> /dev/tcp/localhost/10081
+echo "0,$VALUE_CPU,$VALUE_MEM"
+echo -en "0,$VALUE_CPU,$VALUE_MEM" >&3
+target=`cat <&3`
+# ${USER}
+if [ $target = "err" ]; then
+  echo "空いてるサーバーがありません"
+else
+  comand="ssh mizuno@${target}"
+  echo "${target}に接続します"
+  ${comand}
+fi

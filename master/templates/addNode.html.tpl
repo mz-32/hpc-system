@@ -8,6 +8,8 @@
         <meta name="author" content="">
 
         <title>Server</title>
+        
+        <!-- 以下をGoogleににホストされたものに変更 -->
 
         <!-- Bootstrap Core CSS -->
         <link href="/assets/startmin/css/bootstrap.min.css" rel="stylesheet">
@@ -55,30 +57,18 @@
                     <li><a href="#"><i class="fa fa-home fa-fw"></i> Website</a></li>
                 </ul>
 
-                <ul class="nav navbar-right navbar-top-links">
-                    <li class="dropdown">
-                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                            <i class="fa fa-user fa-fw"></i> secondtruth <b class="caret"></b>
-                        </a>
-                        <ul class="dropdown-menu dropdown-user">
-                            <li><a href="#"><i class="fa fa-user fa-fw"></i> User Profile</a>
-                            </li>
-                            <li><a href="#"><i class="fa fa-gear fa-fw"></i> Settings</a>
-                            </li>
-                            <li class="divider"></li>
-                            <li><a href="login.html"><i class="fa fa-sign-out fa-fw"></i> Logout</a>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
+
                 <!-- /.navbar-top-links -->
 
                 <div class="navbar-default sidebar" role="navigation">
                     <div class="sidebar-nav navbar-collapse">
                         <ul class="nav" id="side-menu">
-                            <li>
-                                <a href="index.html" class="active"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a>
-                            </li>
+                          <li>
+                              <a href="/" ><i class="fa fa-dashboard fa-fw"></i> Dashboard</a>
+                          </li>
+                          <li>
+                              <a href="/add" class="active">add node</a>
+                          </li>
                         </ul>
                     </div>
                 </div>
@@ -93,13 +83,10 @@
                 </div>
                 <form role="form" method="post">
                     <div class="form-group">
-                        <label>IP</label>
+                        <label>HOSTNAME</label>
                         <input name="IP" class="form-control" value="{{if .Ip}}{{.Ip}}{{end}}">
                     </div>
-                    <div class="form-group">
-                        <label>HOSTNAME</label>
-                        <input name="HOSTNAME" class="form-control" value="{{if .Hostname}}{{.Hostname}}{{end}}">
-                    </div>
+
                     <button type="submit" class="btn btn-default">Submit Button</button>
                   </form>
 
@@ -109,6 +96,8 @@
         </div>
         <!-- /#wrapper -->
 
+
+        <!-- 以下をGoogleににホストされたものに変更 -->
         <!-- jQuery -->
         <script src="/assets/startmin/js/jquery.min.js"></script>
 

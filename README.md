@@ -2,5 +2,10 @@ src
 ===
 ライブラリー
 + github.com/shirou/gopsutil
-+ github.com/codegangsta/cli
++ golang.org/x/sys/unix
+
 + github.com/mattn/go-sqlite3
+
+
+
++ github.com/codegangsta/cli

@@ -15,7 +15,7 @@ func main(){
 type Node struct {
   Id int
   Ip  string
-  Hostname string
+
 }
 // ノード追加時にIP、ホスト名を記録
 // 追加成功時　返り値 true
@@ -26,8 +26,8 @@ func InsertNode(node Node)bool{
   }
   defer db.Close()
   res, err := db.Exec(
-    `INSERT INTO NODES (IP, HOSTNAME) VALUES (?, ?)`,
-    node.Ip, node.Hostname,
+    `INSERT INTO NODES (IP) VALUES (?)`,
+    node.Ip,
   )
   if err != nil {
     return false
@@ -50,9 +50,8 @@ func UpdateNode(node Node)bool{
     }
     defer db.Close()
     res, err := db.Exec(
-    `UPDATE NODES SET IP=?, HOSTNAME=? WHERE ID=?`,
+    `UPDATE NODES SET IP=? WHERE ID=?`,
     node.Ip,
-    node.Hostname,
     node.Id,
   )
   if err != nil {
@@ -93,7 +92,7 @@ func GetNodeInfo()(map[int]Node){
       var n Node
 
       // カーソルから値を取得
-      if err := rows.Scan(&n.Id, &n.Ip, &n.Hostname); err != nil {
+      if err := rows.Scan(&n.Id, &n.Ip); err != nil {
         log.Fatal("rows.Scan()", err)
         return  make(map[int]Node)
       }
@@ -125,7 +124,7 @@ func GetNodeInfoFromId(parm int)(Node){
     defer rows.Close()
     for rows.Next() {
       // カーソルから値を取得
-      if err := rows.Scan(&node.Id, &node.Ip, &node.Hostname); err != nil {
+      if err := rows.Scan(&node.Id, &node.Ip); err != nil {
         log.Fatal("rows.Scan()", err)
         return node
       }
@@ -145,7 +144,7 @@ func DbInit(){
 
   // テーブル作成
   _, err = db.Exec(
-    `CREATE TABLE IF NOT EXISTS "NODES" ("ID" INTEGER PRIMARY KEY, "IP" VARCHAR(255) UNIQUE,"HOSTNAME" VARCHAR(255) UNIQUE)`,
+    `CREATE TABLE IF NOT EXISTS "NODES" ("ID" INTEGER PRIMARY KEY, "IP" VARCHAR(255) UNIQUE)`,
   )
   if err != nil {
     panic(err)
