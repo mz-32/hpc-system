@@ -1,16 +1,20 @@
 package main
 
 import (
+    "os"
     "fmt"
     "log"
+    "net"
+    "strings"
     "net/http"
     "text/template"
     "time"
+    "math/rand"
     "strconv"
     "io/ioutil"
     "encoding/json"
     "github.com/shirou/gopsutil/mem"
-    "github.com/shirou/gopsutil/cpu"
+    // "github.com/shirou/gopsutil/cpu"
     //"github.com/shirou/gopsutil/host"
     "./masterdb"
 
@@ -26,6 +30,7 @@ var a = make(map[int][]StatusData)
 var nodes = make(map[int]masterdb.Node)
 var onlineNodes = make(map[int]bool)
 func main() {
+    go comandListener()
     masterdb.DbInit()
     nodes = masterdb.GetNodeInfo()
     fmt.Println(nodes)
@@ -38,7 +43,7 @@ func main() {
     http.HandleFunc("/api/status", handleStatusApi)
     http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("./node_modules/"))))
     // サーバーをポート8080で起動
-    log.Fatal(http.ListenAndServe(":8080", nil))
+    log.Fatal(http.ListenAndServe(":10080", nil))
 }
 
 func handleIndex(w http.ResponseWriter, r *http.Request) {
@@ -56,14 +61,22 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
     }
 }
 func handleInfo(w http.ResponseWriter, r *http.Request) {
+  type InfoData struct {
+  Id  int
+  Hostname string
+  CpuCount []int
+  }
+
     prams := r.URL.Query()
     _, ok := prams["id"]
     if ok {
       id, _ := strconv.Atoi(prams["id"][0])
+      cpus :=getNodeCpuCpunt(id)
+      data := InfoData{Id:id,Hostname:nodes[id].Ip,CpuCount:make([]int, cpus)}
       //masterdb.GetNodeInfoFromId(id )
       t := template.Must(template.ParseFiles("templates/info.html.tpl"))
 
-      if err := t.ExecuteTemplate(w, "info.html.tpl",nodes[id]); err != nil {
+      if err := t.ExecuteTemplate(w, "info.html.tpl",data); err != nil {
           log.Fatal(err)
       }
     }else{
@@ -80,11 +93,11 @@ func handleAddNode(w http.ResponseWriter, r *http.Request) {
       if ok {
         n.Id, _ = strconv.Atoi(prams["id"][0])
         n.Ip = r.FormValue("IP")
-        n.Hostname = r.FormValue("HOSTNAME")
+
         masterdb.UpdateNode(n)
       }else{
         n.Ip = r.FormValue("IP")
-        n.Hostname = r.FormValue("HOSTNAME")
+
         masterdb.InsertNode(n)
       }
       http.Redirect(w, r, "/", http.StatusFound)
@@ -122,7 +135,6 @@ func handleStatusApi(w http.ResponseWriter, r *http.Request) {
 func handleGetStatus(){
   for ;; {
     go getHostStatus()
-
     time.Sleep(5000 * time.Millisecond)
   }
 }
@@ -137,9 +149,28 @@ func getOnlineNodes(){
     }
   }
 }
+func getNodeCpuCpunt(n int)int{
+
+    resp, err := http.Get("http://"+nodes[n].Ip+":55010/api/cpu/counts.json")
+  if err != nil {
+    fmt.Println(err)
+  }else{
+    defer resp.Body.Close()
+    body, err := ioutil.ReadAll(resp.Body)
+     if err != nil {
+         fmt.Println(err)
+     }
+     var data int
+    if err := json.Unmarshal(body, &data); err != nil {
+        log.Fatal(err)
+    }
+    return data
+  }
+  return 0
+}
 func getNodeStatus(){
   for _, n := range nodes {
-    resp, err := http.Get("http://"+n.Ip+":8080/api/status")
+    resp, err := http.Get("http://"+n.Ip+":55010/api/status.json")
   if err != nil {
     fmt.Println(err)
   }else{
@@ -165,23 +196,87 @@ func getNodeStatus(){
   }
     }
 }
+func getFreeNode(rcpu int, rmem int)(masterdb.Node){
+  var freeNode masterdb.Node
+  var freeNodes []masterdb.Node
+  //freecpus := 0
+
+  if rcpu <=0{
+    rcpu = 2
+  }
+  if rmem <=0 {
+    rmem = 10
+  }
+  for i, n:= range onlineNodes{
+    if n {
+      c := 0
+      for _,cpup := range a[i][len(a[i])-1].CpuPer{
+            if cpup < 5{
+              c++
+            }
+          }
+          if c > rcpu{
+            freeNodes = append(freeNodes, nodes[i])
+          }
+
+    }
+  }
+  if len(freeNodes) >0{
+    freeNode = freeNodes[rand.Intn(len(freeNodes))]
+  }
+  return freeNode
+
+}
 func getHostStatus(){
-    fmt.Println("Host status is getting")
-    loc, _ := time.LoadLocation("Asia/Tokyo")
-    cpuPer, _ := cpu.Percent(time.Duration(500)*time.Millisecond,true)
-    nowTime := time.Now().In(loc)
-    vmem, _ := mem.VirtualMemory()
-    data := StatusData{Time:nowTime,Vmem: vmem, CpuPer: cpuPer}
-    _, ok := a[0]
-    if ok  {
-      a[0] = append(a[0], data)
-    }else{
-      a[0] = []StatusData{data}
-    }
-    if len(a) > 100 {
-      a[0] = a[0][1:]
-    }
-    fmt.Println("time : "+nowTime.Format("2006-01-02 15:04:05"))
     getNodeStatus()
     getOnlineNodes()
+    //fmt.Println(getFreeNode())
+}
+func comandListener(){
+  service := ":10081"
+    tcpAddr, err := net.ResolveTCPAddr("tcp4", service)
+    chkErr(err, "ResolveTCPAddr")
+    listener, err := net.ListenTCP("tcp", tcpAddr)
+    chkErr(err, "ListenTCP")
+    for {
+        conn, err := listener.Accept()
+        if err != nil {
+            continue
+        }
+        buf := make([]byte, 1024)
+        n, _ := conn.Read(buf)
+        //chkErr(err, "Read")
+        str :=string(buf[:n])
+        stra := strings.Split(str, ",")
+        input, _ :=strconv.Atoi(stra[0])
+        fmt.Println(stra)
+        if input == 0 {
+          cpus, _ :=strconv.Atoi(stra[1])
+          mem, _ :=strconv.Atoi(stra[2])
+          freeNode := getFreeNode(cpus,mem)
+          if freeNode.Id==0{
+            _, err = conn.Write([]byte("err"))
+          }else{
+            _, err = conn.Write([]byte(freeNode.Ip))
+          }
+          _ = conn.Close()
+        }else{
+          _, err = conn.Write([]byte(""))
+          chkErr(err, "Write")
+          _ = conn.Close()
+        }
+
+        //node := getFreeNode()
+        //daytime := time.Now().String()
+
+
+    }
+}
+
+func chkErr(err error, place string) {
+    if err != nil {
+        fmt.Printf("(%s)", place)
+        fmt.Fprintf(os.Stderr, "%s", err.Error())
+        os.Exit(0)
+    }
 }

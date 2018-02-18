@@ -18,35 +18,54 @@ Vagrant.configure("2") do |config|
 
   # 1台目管理マシン（マシン名：master）
   config.vm.define "master" do |atomic|
-    atomic.vm.hostname = "master.atomichost"
+    atomic.vm.hostname = "master"
+    atomic.vm.synced_folder "./home/", "/opt/home", type:"virtualbox"
     atomic.vm.synced_folder ".", "/share", type:"virtualbox"
-    atomic.vm.synced_folder "/Users/mizunomi/src/hcp-system/.vagrant/machines/node02/virtualbox/", "/ssh/node02", type:"virtualbox"
-    atomic.vm.synced_folder "/Users/mizunomi/src/hcp-system/.vagrant/machines/node01/virtualbox/", "/ssh/node01", type:"virtualbox"
+    atomic.vm.synced_folder "/Users/mizunomi/src/hpc-system/.vagrant/machines/node02/virtualbox/", "/home/vagrant/.ssh/node02", type:"virtualbox"
+    atomic.vm.synced_folder "/Users/mizunomi/src/hpc-system/.vagrant/machines/node01/virtualbox/", "/home/vagrant/.ssh/node01", type:"virtualbox"
     atomic.vm.provision "shell", inline: <<-SHELL
-      sudo yum install -y epel-release
       sudo yum -y update
-      sudo yum install -y golang git
+      sudo yum install -y epel-release golang git tmux
+      sudo yum clean all
+      sudo rm -rf /var/cache/yum
+      sudo useradd user01 -d /opt/home/user01
+      sudo useradd user02 -d /opt/home/user02
       echo "export GOPATH=/home/vagrant/dev/go" >> /home/vagrant/.bashrc
       echo "export PATH=$PATH:$GOPATH/bin">> /home/vagrant/.bashrc
     SHELL
 
     atomic.vm.network "private_network", ip: "192.168.33.10", virtualbox__intnet: "intra"
     atomic.vm.network :forwarded_port, id: "ssh", guest: 22, host: 2222
-    atomic.vm.network :forwarded_port, id: "web", guest: 8080, host: 8081
+    atomic.vm.network :forwarded_port, id: "web", guest: 10080, host: 8081
   end
   # 2台目 コンテナホスト（マシン名：node01）
   config.vm.define "node01" do |atomic|
-    atomic.vm.hostname = "node01.atomichost"
+    atomic.vm.hostname = "node01"
+    atomic.vm.synced_folder "./home/", "/opt/home", type:"virtualbox"
     atomic.vm.synced_folder ".", "/share", type:"virtualbox"
+    atomic.vm.provision "shell", inline: <<-SHELL
+      sudo yum install -y tmux
+      sudo yum clean all
+      sudo rm -rf /var/cache/yum
+      sudo useradd user01 -d /opt/home/user01
+      sudo useradd user02 -d /opt/home/user02
+    SHELL
     atomic.vm.network "private_network", ip: "192.168.33.101", virtualbox__intnet: "intra"
     atomic.vm.network :forwarded_port, id: "ssh", guest: 22, host: 2223
     atomic.vm.network :forwarded_port, id: "web", guest: 8080, host: 8082
   end
   # 3台目 コンテナホスト（マシン名：node02）
   config.vm.define "node02" do |atomic|
-    atomic.vm.hostname = "node02.atomichost"
+    atomic.vm.hostname = "node02"
+    atomic.vm.synced_folder "./home/", "/opt/home", type:"virtualbox"
+    atomic.vm.provision "shell", inline: <<-SHELL
+      sudo yum install -y tmux
+      sudo yum clean all
+      sudo rm -rf /var/cache/yum
+      sudo useradd user01 -d /opt/home/user01
+      sudo useradd user02 -d /opt/home/user02
+    SHELL
     atomic.vm.synced_folder ".", "/share", type:"virtualbox"
-
     atomic.vm.network "private_network", ip: "192.168.33.102", virtualbox__intnet: "intra"
     atomic.vm.network :forwarded_port, id: "ssh", guest: 22, host: 2224
   end
