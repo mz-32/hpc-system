@@ -17,6 +17,7 @@ import (
     // "github.com/shirou/gopsutil/cpu"
     //"github.com/shirou/gopsutil/host"
     "./masterdb"
+    "../lib"
 
 )
 

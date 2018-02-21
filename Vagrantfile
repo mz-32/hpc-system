@@ -21,8 +21,6 @@ Vagrant.configure("2") do |config|
     atomic.vm.hostname = "master"
     atomic.vm.synced_folder "./home/", "/opt/home", type:"virtualbox"
     atomic.vm.synced_folder ".", "/share", type:"virtualbox"
-    atomic.vm.synced_folder "/Users/mizunomi/src/hpc-system/.vagrant/machines/node02/virtualbox/", "/home/vagrant/.ssh/node02", type:"virtualbox"
-    atomic.vm.synced_folder "/Users/mizunomi/src/hpc-system/.vagrant/machines/node01/virtualbox/", "/home/vagrant/.ssh/node01", type:"virtualbox"
     atomic.vm.provision "shell", inline: <<-SHELL
       sudo yum -y update
       sudo yum install -y epel-release golang git tmux

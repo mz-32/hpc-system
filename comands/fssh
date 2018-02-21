@@ -1,4 +1,4 @@
-#!/bin/bash
+#! /bin/bash
 CMDNAME=`basename $0`
 VALUE_CPU=0
 VALUE_MEM=0
@@ -14,9 +14,9 @@ do
 done
 
 
-exec 3<> /dev/tcp/localhost/10081
+exec 3<> /dev/tcp/127.0.0.1/10088
 echo "0,$VALUE_CPU,$VALUE_MEM"
-echo -en "0,$VALUE_CPU,$VALUE_MEM" >&3
+echo -en "0,$USER,$VALUE_CPU,$VALUE_MEM" >&3
 target=`cat <&3`
 # ${USER}
 if [ $target = "err" ]; then
