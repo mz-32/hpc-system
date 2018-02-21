@@ -35,6 +35,7 @@ func main (){
   //go updateData()
   fmt.Println(len(config.Server.Nodes))
   go updateData()
+  go  comandListener()
   http.HandleFunc("/", handleIndex)
   log.Fatal(http.ListenAndServe(":"+config.Server.WebPort, nil))
 
@@ -83,7 +84,7 @@ func getNodeStats(){
 }
 
 func comandListener(){
-  service := ":10081"
+  service := ":"+config.Server.SocketPort
     tcpAddr, err := net.ResolveTCPAddr("tcp4", service)
     chkErr(err, "ResolveTCPAddr")
     listener, err := net.ListenTCP("tcp", tcpAddr)
@@ -102,7 +103,7 @@ func comandListener(){
         username := stra[1]
         fmt.Println(stra)
         if mode == 0 {
-        
+
           // freeNode := getFreeNode(cpus,mem)
           // if freeNode.Id==0{
           //   _, err = conn.Write([]byte("err"))
