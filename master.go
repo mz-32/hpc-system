@@ -13,7 +13,6 @@ import (
     "math/rand"
     "encoding/json"
 
-	"github.com/shirou/gopsutil/cpu"
     "./lib"
 )
 
@@ -86,8 +85,7 @@ func getNodeStats(){
   }
 }
 func getReqNode(username string, rcpus int, rmem int )int{
-  var cpulim cpu.TimesStat
-  cpulim = 10
+  var cpulim = 10.0
   if rcpus <=0{
     rcpus = 2
   }
@@ -111,7 +109,7 @@ func getReqNode(username string, rcpus int, rmem int )int{
       }
       t := nodeStat[node.Id][len(nodeStat[node.Id])-1].Time
       statustime, _ := time.Parse("2006-01-02 15:04:05 -0700 MST", t)
-      if !statustime.Before(limitTime){
+      if !statustime.Before(limitTime) || !logind {
         onlineNodes = append(onlineNodes, node.Id)
         }
     }
@@ -124,7 +122,8 @@ func getReqNode(username string, rcpus int, rmem int )int{
     for _, stat := range nodeStat[nodeId]{
       var c = 0
       for _, cpu := range stat.Cpu {
-        if cpu < cpulim {
+        cpup := (cpu.User+cpu.System)/(cpu.User+cpu.System+cpu.Idle)
+        if cpup < cpulim {
           c++
         }
       }
@@ -168,6 +167,22 @@ func comandListener(){
         fmt.Println(stra)
         if mode == 0 {
           fmt.Println(username)
+          rcpus, _ :=strconv.Atoi(stra[2])
+          rmem, _ :=strconv.Atoi(stra[3])
+          id := getReqNode(username, rcpus, rmem)
+          if id != 0{
+            var ip string
+            for _, node := range config.Server.Nodes{
+              if node.Id == id{
+                ip = node.Ip
+                break
+              }
+            }
+            _, err = conn.Write([]byte(ip))
+          }else{
+            _, err = conn.Write([]byte("err"))
+          }
+
 
           // freeNode := getFreeNode(cpus,mem)
           // if freeNode.Id==0{
@@ -175,7 +190,7 @@ func comandListener(){
           // }else{
           //   _, err = conn.Write([]byte(freeNode.Ip))
           // }
-          _, err = conn.Write([]byte(username))
+
           _ = conn.Close()
         }else{
           _, err = conn.Write([]byte(""))
