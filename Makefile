@@ -1,7 +1,4 @@
-all:
-	getlib
-	node
-	master
+all: getlib	node master
 
 getlib:
 	go get github.com/shirou/gopsutil
