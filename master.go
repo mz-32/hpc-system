@@ -10,7 +10,10 @@ import (
     "net"
     "net/http"
     "io/ioutil"
+    "math/rand"
     "encoding/json"
+
+	"github.com/shirou/gopsutil/cpu"
     "./lib"
 )
 
@@ -56,7 +59,7 @@ func updateData(){
 
 func getNodeStats(){
   for _, node := range config.Server.Nodes {
-
+    // get API で各計算ノードからステータス取得
     resp, err := http.Get("http://"+node.Ip+":"+node.Port+"/api/status.json")
     if err != nil {
       fmt.Println(err)
@@ -82,6 +85,67 @@ func getNodeStats(){
     }
   }
 }
+func getReqNode(username string, rcpus int, rmem int )int{
+  var cpulim cpu.TimesStat
+  cpulim = 10
+  if rcpus <=0{
+    rcpus = 2
+  }
+  if rmem <=0 {
+    rmem = 100
+  }
+
+  // オンライン判定, 使用中
+  var onlineNodes []int
+  var limitTime = time.Now().Add(-1* time.Minute)
+  for _, node := range config.Server.Nodes {
+    _, ok := nodeStat[node.Id]
+    if ok  {
+
+      var logind = false
+      for _, u:= range nodeStat[node.Id][len(nodeStat[node.Id])-1].ActiveUser{
+        if u ==  username{
+          logind = true
+          break
+        }
+      }
+      t := nodeStat[node.Id][len(nodeStat[node.Id])-1].Time
+      statustime, _ := time.Parse("2006-01-02 15:04:05 -0700 MST", t)
+      if !statustime.Before(limitTime){
+        onlineNodes = append(onlineNodes, node.Id)
+        }
+    }
+  }
+  // 負荷判定
+
+  var freeNode []int
+  for _, nodeId := range onlineNodes {
+    var freeCpus = 100
+    for _, stat := range nodeStat[nodeId]{
+      var c = 0
+      for _, cpu := range stat.Cpu {
+        if cpu < cpulim {
+          c++
+        }
+      }
+      if freeCpus > c{
+        freeCpus = c
+      }
+    }
+    if freeCpus > rcpus + 2{
+      freeNode = append(freeNode,nodeId)
+    }
+  }
+
+  //　当てはまる中からランダムに計算ノードを選択する
+  if len(freeNode) > 0{
+    rand.Seed(time.Now().UnixNano())
+    i := rand.Intn(len(freeNode))
+    return freeNode[i]
+  }
+
+  return 0
+}
 
 func comandListener(){
   service := ":"+config.Server.SocketPort
@@ -103,6 +167,7 @@ func comandListener(){
         username := stra[1]
         fmt.Println(stra)
         if mode == 0 {
+          fmt.Println(username)
 
           // freeNode := getFreeNode(cpus,mem)
           // if freeNode.Id==0{

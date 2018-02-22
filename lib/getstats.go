@@ -1,7 +1,7 @@
 package lib
 
 import (
-	"fmt"
+	//"fmt"
 	// "os/exec"
 	// "strings"
 	"time"
@@ -86,7 +86,7 @@ func (s *ServerStat) GetDiskIOStat() error {
 
 func (s *ServerStat) GetTime() {
 	now := time.Now()
-	s.Time = fmt.Sprint(now)
+	s.Time = now.Format("2006-01-02 15:04:05 -0700 MST")
 }
 
 func (s *ServerStat) GetCpuStat() error {
