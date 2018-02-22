@@ -1,5 +1,7 @@
 all:
 	getlib
+	node
+	master
 
 getlib:
 	go get github.com/shirou/gopsutil
@@ -14,8 +16,9 @@ init:
 	mkdir ./bin/
 
 node: node.go init
-	mkdir ./bin/node/
-	go build -o ./bin/node/node node.go
+	go build -o ./bin/node node.go
 
+master: master.go
+	go build -o ./bin/master master.go
 clean:
 	rm -r ./bin/
